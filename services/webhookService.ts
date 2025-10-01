@@ -1,10 +1,11 @@
 import { CompanyFormData, EmployeeFormData, FormType } from '../types';
 
-const WEBHOOK_URL = process.env.WEBHOOK_URL;
-const WEBHOOK_AUTH = process.env.WEBHOOK_AUTH;
+// Vite exposes env vars that start with VITE_ to the browser
+const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL;
+const WEBHOOK_AUTH = import.meta.env.VITE_WEBHOOK_AUTH;
 
 if (!WEBHOOK_URL) {
-  console.warn("Missing WEBHOOK_URL environment variable. Form submissions will be logged to the console instead.");
+  console.warn("Missing VITE_WEBHOOK_URL environment variable. Form submissions will be logged to the console instead.");
 }
 
 export const submitForm = async (
@@ -20,6 +21,7 @@ export const submitForm = async (
   console.log('Form Type:', type);
   console.log('Data:', JSON.stringify(data, null, 2));
   console.log('WEBHOOK_URL configured:', WEBHOOK_URL ? 'Yes' : 'No');
+  console.log('WEBHOOK_URL value:', WEBHOOK_URL);
   console.log('WEBHOOK_AUTH configured:', WEBHOOK_AUTH ? 'Yes' : 'No');
 
   if (!WEBHOOK_URL) {
