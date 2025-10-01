@@ -17,7 +17,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     setError('');
     setIsLoading(true);
 
-    // Simulate API call
+    // NOTE: This is a mock authentication for demonstration purposes.
+    // In a real production app, you would use a secure authentication service.
     setTimeout(() => {
       if (email === 'test@test.com' && password === 'password') {
         onLoginSuccess();

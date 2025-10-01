@@ -12,6 +12,13 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({ options, val
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -23,6 +30,16 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({ options, val
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [wrapperRef]);
   
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const filteredOptions = options.filter(option =>
     option.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -56,6 +73,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({ options, val
         <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl shadow-lg max-h-60 overflow-auto">
           <div className="p-2">
             <input
+              ref={inputRef}
               type="text"
               placeholder="Search country..."
               value={searchTerm}

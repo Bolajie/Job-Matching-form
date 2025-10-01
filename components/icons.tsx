@@ -6,12 +6,46 @@ type IconProps = {
 };
 
 export const LogoIcon: React.FC<IconProps> = ({ className }) => (
-  <svg className={className || "h-8 w-8 text-primary"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-    <path d="M2 17l10 5 10-5"></path>
-    <path d="M2 12l10 5 10-5"></path>
-  </svg>
+    <svg 
+        className={className || "h-8 w-8 text-primary"} 
+        viewBox="0 0 200 200"
+        xmlns="http://www.w3.org/2000/svg"
+        stroke="currentColor" 
+        fill="none"
+        strokeWidth="8" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
+    >
+        <circle cx="100" cy="100" r="90" />
+        <path d="
+            M90 155
+            C 90 135, 95 120, 110 115
+            L 140 108
+            C 145 106, 148 103, 148 98
+            C 148 94, 145 92, 142 92
+            C 138 92, 135 88, 136 82
+            C 137 76, 134 72, 129 72
+            C 121 72, 118 66, 118 60
+            C 118 54, 121 50, 127 50
+            C 133 50, 136 54, 136 60
+            L 136 82
+        " />
+        <path d="
+            M129 72
+            C 124 62, 127 52, 136 49
+            C 145 46, 149 56, 144 64
+        " />
+        <path d="M136 50 C 133 44, 139 40, 143 44" />
+        <path d="
+            M90 155
+            C 95 170, 115 170, 125 155
+            C 135 140, 127 125, 115 123
+            C 103 121, 100 133, 105 143
+            C 110 153, 123 153, 125 143
+        " />
+    </svg>
 );
+
 
 export const SparklesIcon: React.FC<IconProps> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-6 w-6 text-primary"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

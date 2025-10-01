@@ -45,8 +45,12 @@ export const submitForm = async (
       
       response = await fetch(WEBHOOK_URL, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.WEBHOOK_AUTH}`,
+        },
         body: formData,
       });
+
 
     } else {
       // Use application/json for other forms
@@ -54,10 +58,11 @@ export const submitForm = async (
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.WEBHOOK_AUTH}`,
         },
         body: JSON.stringify(payload),
       });
-    }
+
 
     if (!response.ok) {
       let errorDetail = '';

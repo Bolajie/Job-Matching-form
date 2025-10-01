@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { CloseIcon, InfoIcon, ErrorIcon } from './icons';
 
@@ -27,25 +26,3 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     </div>
   );
 };
-
-// Add keyframes for animation in a style tag or your main CSS if you had one.
-// Since we don't, this is a simple way to do it. A real app might use a CSS file.
-if (typeof window !== 'undefined') {
-    const style = document.createElement('style');
-    style.innerHTML = `
-        @keyframes fade-in-up {
-            0% {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .animate-fade-in-up {
-            animation: fade-in-up 0.3s ease-out forwards;
-        }
-    `;
-    document.head.appendChild(style);
-}
