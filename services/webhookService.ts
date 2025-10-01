@@ -32,47 +32,66 @@ export const submitForm = async (
     const hasResume = type === FormType.Employee && (data as EmployeeFormData).resume;
     
     if (hasResume) {
-      console.log('Preparing multipart/form-data request with resume');
+      console.log('Preparing JSON request with base64-encoded resume');
       
-      // Use multipart/form-data for file uploads
-      const formData = new FormData();
+      const employeeData = data as EmployeeFormData;
+      const file = employeeData.resume;
       
-      // Add type field
-      formData.append('type', type);
-
-      // Append all data fields
-      Object.entries(data).forEach(([key, value]) => {
-        if (key === 'resume' && value instanceof File) {
-          console.log(`Appending file: ${value.name}, size: ${value.size} bytes, type: ${value.type}`);
-          formData.append('resume', value, value.name);
-        } else if (key !== 'resume' && value !== null && value !== undefined) {
-          if (typeof value === 'string') {
-            formData.append(key, value);
-            console.log(`Appending ${key}: ${value}`);
-          } else if (Array.isArray(value)) {
-            formData.append(key, JSON.stringify(value));
-            console.log(`Appending ${key}: ${JSON.stringify(value)}`);
-          } else {
-            formData.append(key, String(value));
-            console.log(`Appending ${key}: ${String(value)}`);
-          }
-        }
+      if (!file) {
+        throw new Error('Resume file is required');
+      }
+      
+      console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+      
+      // Convert file to base64
+      const base64File = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
+          const base64 = result.split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
       });
       
-      // Build headers - DON'T set Content-Type for FormData (browser sets it automatically)
-      const headers: HeadersInit = {};
+      console.log('File converted to base64, length:', base64File.length);
+      
+      // Create payload with file data embedded as base64
+      const payload = {
+        type,
+        data: {
+          fullName: employeeData.fullName,
+          email: employeeData.email,
+          phone: employeeData.phone,
+          skillLevel: employeeData.skillLevel,
+          resume: {
+            filename: file.name,
+            mimetype: file.type,
+            size: file.size,
+            data: base64File
+          }
+        }
+      };
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
       if (WEBHOOK_AUTH) {
         headers['key'] = WEBHOOK_AUTH;
         console.log('Added auth header "key"');
       }
 
-      console.log('Sending multipart POST request to:', WEBHOOK_URL);
+      console.log('Sending JSON POST request with embedded file to:', WEBHOOK_URL);
       console.log('Request headers:', Object.keys(headers));
+      console.log('Payload keys:', Object.keys(payload.data));
+      console.log('Resume data keys:', Object.keys(payload.data.resume));
 
       response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers,
-        body: formData,
+        body: JSON.stringify(payload),
         mode: 'cors',
       });
 
