@@ -1,3 +1,4 @@
+
 import { CompanyFormData, EmployeeFormData, FormType } from '../types';
 
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
@@ -62,6 +63,7 @@ export const submitForm = async (
         },
         body: JSON.stringify(payload),
       });
+    }
 
 
     if (!response.ok) {
