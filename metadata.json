@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Job Portal",
+  "description": "A responsive web app with a login page and a protected form page for company job postings and employee applications, with webhook integration.",
+  "requestFramePermissions": []
+}
