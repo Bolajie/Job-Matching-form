@@ -40,40 +40,61 @@ export const submitForm = async (
     if (hasResume) {
       console.log('Preparing multipart/form-data request with resume');
       
-      // Use multipart/form-data for file uploads
-      const formData = new FormData();
-      formData.append('type', type);
-
-      // Append all data fields
-      Object.entries(data).forEach(([key, value]) => {
-        if (key === 'resume' && value instanceof File) {
-          console.log(`Appending file: ${value.name}, size: ${value.size} bytes`);
-          formData.append('resume', value, value.name);
-        } else if (key !== 'resume') {
-          if (typeof value === 'string') {
-            formData.append(key, value);
-          } else if (Array.isArray(value)) {
-            formData.append(key, JSON.stringify(value));
-          } else if (value !== null && value !== undefined) {
-            formData.append(key, String(value));
-          }
-        }
-      });
+      // For file uploads, send as JSON with base64 encoded file
+      // This avoids CORS preflight issues with multipart/form-data
+      const employeeData = data as EmployeeFormData;
+      const file = employeeData.resume;
       
-      const headers: HeadersInit = {};
-      if (WEBHOOK_AUTH) {
-        headers['key'] = WEBHOOK_AUTH;
-        console.log('Added auth header "key"');
+      if (file) {
+        console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+        
+        // Convert file to base64
+        const base64File = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1]; // Remove data:*/*;base64, prefix
+            resolve(base64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        
+        console.log('File converted to base64, length:', base64File.length);
+        
+        // Send everything as JSON
+        const jsonPayload = {
+          type,
+          data: {
+            ...data,
+            resume: {
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              data: base64File
+            }
+          }
+        };
+        
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+        if (WEBHOOK_AUTH) {
+          headers['key'] = WEBHOOK_AUTH;
+          console.log('Added auth header "key"');
+        }
+
+        console.log('Sending POST request to:', WEBHOOK_URL);
+        console.log('Headers:', Object.keys(headers));
+        console.log('Payload size:', JSON.stringify(jsonPayload).length, 'bytes');
+
+        response = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(jsonPayload),
+        });
+      } else {
+        throw new Error('Resume file is required');
       }
-
-      console.log('Sending POST request to:', WEBHOOK_URL);
-      console.log('Headers:', Object.keys(headers));
-
-      response = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers,
-        body: formData,
-      });
 
     } else {
       console.log('Preparing application/json request');
