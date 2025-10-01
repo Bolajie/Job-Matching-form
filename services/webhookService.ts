@@ -49,7 +49,8 @@ export const submitForm = async (
       
       const headers: HeadersInit = {};
       if (WEBHOOK_AUTH) {
-        headers['Authorization'] = `Bearer ${WEBHOOK_AUTH}`;
+        // Use a custom header for n8n's Header Auth
+        headers['key'] = WEBHOOK_AUTH;
       }
 
       response = await fetch(WEBHOOK_URL, {
@@ -65,7 +66,8 @@ export const submitForm = async (
         'Content-Type': 'application/json',
       };
       if (WEBHOOK_AUTH) {
-        headers['Authorization'] = `Bearer ${WEBHOOK_AUTH}`;
+        // Use a custom header for n8n's Header Auth
+        headers['key'] = WEBHOOK_AUTH;
       }
       
       response = await fetch(WEBHOOK_URL, {
