@@ -1,10 +1,13 @@
-
 import { CompanyFormData, EmployeeFormData, FormType } from '../types';
 
+// Access environment variables using `process.env`, which is the standard
+// supported by the execution environment. For deployment on platforms like Vercel,
+// these variables must be configured in the project settings.
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
+const WEBHOOK_AUTH = process.env.WEBHOOK_AUTH;
 
 if (!WEBHOOK_URL) {
-  console.warn("Missing WEBHOOK_URL. Form submissions will be logged to the console instead.");
+  console.warn("Missing WEBHOOK_URL environment variable. Form submissions will be logged to the console instead.");
 }
 
 export const submitForm = async (
@@ -44,23 +47,30 @@ export const submitForm = async (
         }
       });
       
+      const headers: HeadersInit = {};
+      if (WEBHOOK_AUTH) {
+        headers['Authorization'] = `Bearer ${WEBHOOK_AUTH}`;
+      }
+
       response = await fetch(WEBHOOK_URL, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.WEBHOOK_AUTH}`,
-        },
+        headers,
         body: formData,
       });
 
 
     } else {
       // Use application/json for other forms
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      if (WEBHOOK_AUTH) {
+        headers['Authorization'] = `Bearer ${WEBHOOK_AUTH}`;
+      }
+      
       response = await fetch(WEBHOOK_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.WEBHOOK_AUTH}`,
-        },
+        headers,
         body: JSON.stringify(payload),
       });
     }
