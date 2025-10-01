@@ -12,14 +12,8 @@ export const submitForm = async (
   type: FormType,
   data: CompanyFormData | EmployeeFormData
 ): Promise<{ success: boolean; message: string }> => {
-  const payload = {
-    type,
-    data,
-  };
-
   console.log('=== WEBHOOK SUBMISSION START ===');
   console.log('Form Type:', type);
-  console.log('Data:', JSON.stringify(data, null, 2));
   console.log('WEBHOOK_URL configured:', WEBHOOK_URL ? 'Yes' : 'No');
   console.log('WEBHOOK_URL value:', WEBHOOK_URL);
   console.log('WEBHOOK_AUTH configured:', WEBHOOK_AUTH ? 'Yes' : 'No');
@@ -40,66 +34,57 @@ export const submitForm = async (
     if (hasResume) {
       console.log('Preparing multipart/form-data request with resume');
       
-      // For file uploads, send as JSON with base64 encoded file
-      // This avoids CORS preflight issues with multipart/form-data
-      const employeeData = data as EmployeeFormData;
-      const file = employeeData.resume;
+      // Use multipart/form-data for file uploads
+      const formData = new FormData();
       
-      if (file) {
-        console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
-        
-        // Convert file to base64
-        const base64File = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const base64 = (reader.result as string).split(',')[1]; // Remove data:*/*;base64, prefix
-            resolve(base64);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-        
-        console.log('File converted to base64, length:', base64File.length);
-        
-        // Send everything as JSON
-        const jsonPayload = {
-          type,
-          data: {
-            ...data,
-            resume: {
-              name: file.name,
-              type: file.type,
-              size: file.size,
-              data: base64File
-            }
+      // Add type field
+      formData.append('type', type);
+
+      // Append all data fields
+      Object.entries(data).forEach(([key, value]) => {
+        if (key === 'resume' && value instanceof File) {
+          console.log(`Appending file: ${value.name}, size: ${value.size} bytes, type: ${value.type}`);
+          formData.append('resume', value, value.name);
+        } else if (key !== 'resume' && value !== null && value !== undefined) {
+          if (typeof value === 'string') {
+            formData.append(key, value);
+            console.log(`Appending ${key}: ${value}`);
+          } else if (Array.isArray(value)) {
+            formData.append(key, JSON.stringify(value));
+            console.log(`Appending ${key}: ${JSON.stringify(value)}`);
+          } else {
+            formData.append(key, String(value));
+            console.log(`Appending ${key}: ${String(value)}`);
           }
-        };
-        
-        const headers: HeadersInit = {
-          'Content-Type': 'application/json',
-        };
-        if (WEBHOOK_AUTH) {
-          headers['key'] = WEBHOOK_AUTH;
-          console.log('Added auth header "key"');
         }
-
-        console.log('Sending POST request to:', WEBHOOK_URL);
-        console.log('Headers:', Object.keys(headers));
-        console.log('Payload size:', JSON.stringify(jsonPayload).length, 'bytes');
-
-        response = await fetch(WEBHOOK_URL, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(jsonPayload),
-        });
-      } else {
-        throw new Error('Resume file is required');
+      });
+      
+      // Build headers - DON'T set Content-Type for FormData (browser sets it automatically)
+      const headers: HeadersInit = {};
+      if (WEBHOOK_AUTH) {
+        headers['key'] = WEBHOOK_AUTH;
+        console.log('Added auth header "key"');
       }
+
+      console.log('Sending multipart POST request to:', WEBHOOK_URL);
+      console.log('Request headers:', Object.keys(headers));
+
+      response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers,
+        body: formData,
+        mode: 'cors',
+      });
 
     } else {
       console.log('Preparing application/json request');
       
-      // Use application/json for other forms
+      const payload = {
+        type,
+        data,
+      };
+      
+      // Use application/json for company forms
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
       };
@@ -108,14 +93,15 @@ export const submitForm = async (
         console.log('Added auth header "key"');
       }
       
-      console.log('Sending POST request to:', WEBHOOK_URL);
-      console.log('Headers:', Object.keys(headers));
+      console.log('Sending JSON POST request to:', WEBHOOK_URL);
+      console.log('Request headers:', Object.keys(headers));
       console.log('Payload:', JSON.stringify(payload, null, 2));
 
       response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
+        mode: 'cors',
       });
     }
 
@@ -183,6 +169,21 @@ export const submitForm = async (
 
   } catch (error: unknown) {
     console.error('❌ Webhook submission error:', error);
+    
+    // Check if it's a network error
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      console.error('Network error: This could be due to:');
+      console.error('1. CORS not properly configured');
+      console.error('2. Network connectivity issues');
+      console.error('3. n8n server not reachable');
+      console.error('4. SSL/TLS certificate issues');
+      
+      return { 
+        success: false, 
+        message: 'Network error: Unable to reach the server. Please check your internet connection and try again.' 
+      };
+    }
+    
     console.error('Error details:', error instanceof Error ? error.stack : 'Unknown error');
     console.log('=== WEBHOOK SUBMISSION END (WITH ERROR) ===');
     
