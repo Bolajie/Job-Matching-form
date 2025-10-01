@@ -7,42 +7,18 @@ type IconProps = {
 
 export const LogoIcon: React.FC<IconProps> = ({ className }) => (
     <svg 
-        className={className || "h-8 w-8 text-primary"} 
-        viewBox="0 0 200 200"
+        className={className || "h-10 w-10 text-primary"} 
+        viewBox="0 0 64 64" 
         xmlns="http://www.w3.org/2000/svg"
         stroke="currentColor" 
         fill="none"
-        strokeWidth="8" 
+        strokeWidth="2.5" 
         strokeLinecap="round" 
         strokeLinejoin="round"
     >
-        <circle cx="100" cy="100" r="90" />
-        <path d="
-            M90 155
-            C 90 135, 95 120, 110 115
-            L 140 108
-            C 145 106, 148 103, 148 98
-            C 148 94, 145 92, 142 92
-            C 138 92, 135 88, 136 82
-            C 137 76, 134 72, 129 72
-            C 121 72, 118 66, 118 60
-            C 118 54, 121 50, 127 50
-            C 133 50, 136 54, 136 60
-            L 136 82
-        " />
-        <path d="
-            M129 72
-            C 124 62, 127 52, 136 49
-            C 145 46, 149 56, 144 64
-        " />
-        <path d="M136 50 C 133 44, 139 40, 143 44" />
-        <path d="
-            M90 155
-            C 95 170, 115 170, 125 155
-            C 135 140, 127 125, 115 123
-            C 103 121, 100 133, 105 143
-            C 110 153, 123 153, 125 143
-        " />
+        <circle cx="32" cy="32" r="29" />
+        <circle cx="32" cy="32" r="26" />
+        <path d="M26.5 49 C 23 41, 38 41, 40 46 C 42.5 52, 38 48, 48 37 L 54 30 L 51 27 M 40 25 C 36 20, 34 17, 37 13 M 36 20 L 33 17 M 44 23 C 41 17, 42 13, 47 11 M 42 17 L 40 15 M 26.5 49 C 24.5 43, 22.5 35, 28.5 35" />
     </svg>
 );
 
@@ -140,7 +116,7 @@ export const OfficeBuildingIcon: React.FC<IconProps> = ({ className }) => (
 );
 
 export const PhoneIcon: React.FC<IconProps> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-5 w-5"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-5 w-5"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
     </svg>
 );
@@ -148,5 +124,11 @@ export const PhoneIcon: React.FC<IconProps> = ({ className }) => (
 export const CheckCircleIcon: React.FC<IconProps> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-6 w-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
+export const LogoutIcon: React.FC<IconProps> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-5 w-5"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
     </svg>
 );

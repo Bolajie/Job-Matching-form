@@ -6,6 +6,12 @@ interface LoginPageProps {
   onLoginSuccess: () => void;
 }
 
+// NOTE: This is a mock authentication for demonstration purposes.
+const users = [
+  { email: 'bolajiemmanuel93@gmail.com', password: 'Emmanuel@15842' },
+  { email: '******', password: '@@@@@@@' },
+];
+
 export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,10 +26,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     // NOTE: This is a mock authentication for demonstration purposes.
     // In a real production app, you would use a secure authentication service.
     setTimeout(() => {
-      if (email === 'test@test.com' && password === 'password') {
+      const foundUser = users.find(user => user.email === email && user.password === password);
+      if (foundUser) {
         onLoginSuccess();
       } else {
-        setError('Invalid email or password. Use test@test.com and "password".');
+        setError('Invalid email or password.');
       }
       setIsLoading(false);
     }, 1000);
@@ -33,12 +40,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-background-light dark:bg-background-dark">
       <main className="w-full max-w-[420px] mx-auto">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center gap-2 mb-2">
-            <LogoIcon className="h-10 w-10 text-primary" />
+          <div className="inline-flex items-center justify-center gap-3 mb-4">
+            <LogoIcon className="h-12 w-12 text-primary" />
+            <span className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
+                Dareautomate
+            </span>
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Sign in to your account
+          <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-200 tracking-tight">
+            Sign in to the Job Portal
           </h1>
+          <p className="mt-2 text-base text-slate-600 dark:text-slate-400">
+            We pair the best employees with the best companies.
+          </p>
         </div>
         
         <div className="bg-white dark:bg-surface-dark p-8 rounded-2xl shadow-lg">

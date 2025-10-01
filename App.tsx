@@ -14,6 +14,12 @@ const App: React.FC = () => {
     setToast({ message: 'Login successful!', type: 'success' });
   }, []);
 
+  const handleLogout = useCallback(() => {
+    setIsAuthenticated(false);
+    setIsSubmitted(false);
+    setToast({ message: 'You have been logged out.', type: 'success' });
+  }, []);
+
   const handleFormSuccess = useCallback(() => {
     setIsSubmitted(true);
   }, []);
@@ -33,7 +39,7 @@ const App: React.FC = () => {
     if (isSubmitted) {
       return <ThankYouPage onReset={handleReset} />;
     }
-    return <FormPage showToast={showToast} onFormSuccess={handleFormSuccess} />;
+    return <FormPage showToast={showToast} onFormSuccess={handleFormSuccess} onLogout={handleLogout} />;
   }
 
   return (
