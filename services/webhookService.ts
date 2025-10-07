@@ -1,11 +1,26 @@
 import { CompanyFormData, EmployeeFormData, FormType } from '../types';
 
-// Vite exposes env vars that start with VITE_ to the browser
-const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL;
-const WEBHOOK_AUTH = import.meta.env.VITE_WEBHOOK_AUTH;
+// =================================================================================
+// IMPORTANT: CONFIGURE YOUR WEBHOOK DETAILS HERE
+// =================================================================================
+// 1. Replace 'YOUR_WEBHOOK_URL_HERE' with your actual webhook URL.
+//    If you don't have a webhook, you can leave this as is. 
+//    Form submissions will be simulated and logged to the browser console.
+const WEBHOOK_URL_CONFIG = 'YOUR_WEBHOOK_URL_HERE'; 
+
+// 2. Replace 'YOUR_WEBHOOK_AUTH_TOKEN_HERE' with your auth token if your webhook
+//    requires one. If not, you can leave it as is or set it to an empty string ('').
+const WEBHOOK_AUTH_CONFIG = 'YOUR_WEBHOOK_AUTH_TOKEN_HERE';
+// =================================================================================
+// Do not edit below this line
+// =================================================================================
+
+const WEBHOOK_URL = WEBHOOK_URL_CONFIG.startsWith('http') ? WEBHOOK_URL_CONFIG : undefined;
+const WEBHOOK_AUTH = WEBHOOK_AUTH_CONFIG !== 'YOUR_WEBHOOK_AUTH_TOKEN_HERE' ? WEBHOOK_AUTH_CONFIG : undefined;
+
 
 if (!WEBHOOK_URL) {
-  console.warn("Missing VITE_WEBHOOK_URL environment variable. Form submissions will be logged to the console instead.");
+  console.warn("Webhook URL is not configured in services/webhookService.ts. Form submissions will be simulated in the console.");
 }
 
 export const submitForm = async (
@@ -22,6 +37,7 @@ export const submitForm = async (
     console.log('No WEBHOOK_URL found, simulating submission');
     return new Promise(resolve => {
         setTimeout(() => {
+            console.log('Simulated submission data:', { type, data });
             resolve({ success: true, message: 'Submission successful (simulated)!' });
         }, 1000);
     });
@@ -32,7 +48,7 @@ export const submitForm = async (
     const hasResume = type === FormType.Employee && (data as EmployeeFormData).resume;
     
     if (hasResume) {
-      console.log('Preparing JSON request with base64-encoded resume');
+      console.log('Preparing multipart/form-data request with resume');
       
       const employeeData = data as EmployeeFormData;
       const file = employeeData.resume;
@@ -43,55 +59,32 @@ export const submitForm = async (
       
       console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
       
-      // Convert file to base64
-      const base64File = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
-          const base64 = result.split(',')[1];
-          resolve(base64);
-        };
-        reader.onerror = () => reject(new Error('Failed to read file'));
-        reader.readAsDataURL(file);
-      });
-      
-      console.log('File converted to base64, length:', base64File.length);
-      
-      // Create payload with file data embedded as base64
-      const payload = {
-        type,
-        data: {
-          fullName: employeeData.fullName,
-          email: employeeData.email,
-          phone: employeeData.phone,
-          skillLevel: employeeData.skillLevel,
-          resume: {
-            filename: file.name,
-            mimetype: file.type,
-            size: file.size,
-            data: base64File
-          }
-        }
-      };
-      
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
+      const formData = new FormData();
+      // It's good practice to send all data, including the 'type', in the form data
+      // so the server can easily parse it.
+      formData.append('type', type);
+      formData.append('fullName', employeeData.fullName);
+      formData.append('email', employeeData.email);
+      formData.append('phone', employeeData.phone);
+      formData.append('skillLevel', employeeData.skillLevel);
+      formData.append('resume', file, file.name);
+
+      const headers: HeadersInit = {};
       if (WEBHOOK_AUTH) {
         headers['key'] = WEBHOOK_AUTH;
         console.log('Added auth header "key"');
       }
 
-      console.log('Sending JSON POST request with embedded file to:', WEBHOOK_URL);
+      console.log('Sending multipart/form-data POST request to:', WEBHOOK_URL);
       console.log('Request headers:', Object.keys(headers));
-      console.log('Payload keys:', Object.keys(payload.data));
-      console.log('Resume data keys:', Object.keys(payload.data.resume));
+      console.log('FormData keys:', Array.from(formData.keys()));
 
+      // When using FormData with fetch, DO NOT set the 'Content-Type' header.
+      // The browser will automatically set it to 'multipart/form-data' with the correct boundary.
       response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers,
-        body: JSON.stringify(payload),
+        body: formData,
         mode: 'cors',
       });
 
@@ -103,7 +96,6 @@ export const submitForm = async (
         data,
       };
       
-      // Use application/json for company forms
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
       };
@@ -192,14 +184,13 @@ export const submitForm = async (
     // Check if it's a network error
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
       console.error('Network error: This could be due to:');
-      console.error('1. CORS not properly configured');
-      console.error('2. Network connectivity issues');
-      console.error('3. n8n server not reachable');
-      console.error('4. SSL/TLS certificate issues');
+      console.error('1. CORS issue: The server at the configured WEBHOOK_URL is not configured to accept requests from this origin. Check the browser console for specific CORS error messages.');
+      console.error('2. Network connectivity issue: The server is down or unreachable.');
+      console.error('3. Mixed content: The app is on HTTPS but the webhook is on HTTP.');
       
       return { 
         success: false, 
-        message: 'Network error: Unable to reach the server. Please check your internet connection and try again.' 
+        message: 'Network error: Unable to reach server. This is often a CORS issue. Please check the browser\'s developer console for more details.' 
       };
     }
     

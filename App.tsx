@@ -3,6 +3,7 @@ import { LoginPage } from './components/LoginPage';
 import { FormPage } from './components/FormPage';
 import { Toast } from './components/Toast';
 import { ThankYouPage } from './components/ThankYouPage';
+import { ThemeToggle } from './components/ThemeToggle';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -44,7 +45,12 @@ const App: React.FC = () => {
 
   return (
     <>
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+
       {renderContent()}
+
       {toast && (
         <Toast
           message={toast.message}
