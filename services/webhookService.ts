@@ -15,7 +15,7 @@ const WEBHOOK_AUTH_CONFIG = 'YOUR_WEBHOOK_AUTH_TOKEN_HERE';
 // Do not edit below this line
 // =================================================================================
 
-const WEBHOOK_URL = WEBHOOK_URL_CONFIG.startsWith('http') ? WEBHOOK_URL_CONFIG : undefined;
+const WEBHOOK_URL = WEBHOOK_URL_CONFIG.startsWith('https') ? WEBHOOK_URL_CONFIG : undefined;
 const WEBHOOK_AUTH = WEBHOOK_AUTH_CONFIG !== 'YOUR_WEBHOOK_AUTH_TOKEN_HERE' ? WEBHOOK_AUTH_CONFIG : undefined;
 
 
