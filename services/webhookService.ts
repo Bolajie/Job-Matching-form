@@ -3,17 +3,22 @@ import { CompanyFormData, EmployeeFormData, FormType } from '../types';
 // =================================================================================
 // IMPORTANT: CONFIGURE YOUR WEBHOOK DETAILS HERE
 // =================================================================================
-// 1. Set your webhook URL.
-//    If you don't have one, form submissions will be simulated in the browser console.
-const WEBHOOK_URL_CONFIG = 'YOUR_WEBHOOK_URL_HERE'; 
-
-// 2. Configure Header Authentication (optional).
-//    Based on your screenshot, you should set:
-//    - WEBHOOK_HEADER_NAME_CONFIG to 'key'
-//    - WEBHOOK_HEADER_VALUE_CONFIG to the secret value for that key.
-//    If your webhook doesn't need auth, leave these as they are.
-const WEBHOOK_HEADER_NAME_CONFIG = 'YOUR_HEADER_NAME_HERE'; // e.g., 'key' or 'Authorization'
-const WEBHOOK_HEADER_VALUE_CONFIG = 'YOUR_HEADER_VALUE_HERE'; // e.g., 'YOUR_SECRET_TOKEN'
+// For production environments like Vercel, it is highly recommended to set these
+// values as Environment Variables in your project settings.
+//
+// Vercel instructions:
+// 1. Go to your Project > Settings > Environment Variables.
+// 2. Add the following variables:
+//    - WEBHOOK_URL: Your full webhook endpoint URL.
+//    - WEBHOOK_HEADER_NAME: The name of the authentication header (e.g., 'key').
+//    - WEBHOOK_HEADER_VALUE: The secret value for the authentication header.
+//
+// The code will prioritize environment variables. If they are not found, it will
+// fall back to the hardcoded values below, which is useful for local development.
+// =================================================================================
+const WEBHOOK_URL_CONFIG = process.env.WEBHOOK_URL || 'YOUR_WEBHOOK_URL_HERE'; 
+const WEBHOOK_HEADER_NAME_CONFIG = process.env.WEBHOOK_HEADER_NAME || 'YOUR_HEADER_NAME_HERE';
+const WEBHOOK_HEADER_VALUE_CONFIG = process.env.WEBHOOK_HEADER_VALUE || 'YOUR_HEADER_VALUE_HERE';
 // =================================================================================
 // Do not edit below this line
 // =================================================================================
@@ -24,7 +29,7 @@ const WEBHOOK_HEADER_VALUE = WEBHOOK_HEADER_VALUE_CONFIG !== 'YOUR_HEADER_VALUE_
 
 
 if (!WEBHOOK_URL) {
-  console.warn("Webhook URL is not configured in services/webhookService.ts. Form submissions will be simulated in the console.");
+  console.warn("Webhook URL is not configured. Form submissions will be simulated in the console. For production, set the WEBHOOK_URL environment variable.");
 }
 
 export const submitForm = async (
