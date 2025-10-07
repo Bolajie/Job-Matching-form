@@ -3,20 +3,24 @@ import { CompanyFormData, EmployeeFormData, FormType } from '../types';
 // =================================================================================
 // IMPORTANT: CONFIGURE YOUR WEBHOOK DETAILS HERE
 // =================================================================================
-// 1. Replace 'YOUR_WEBHOOK_URL_HERE' with your actual webhook URL.
-//    If you don't have a webhook, you can leave this as is. 
-//    Form submissions will be simulated and logged to the browser console.
+// 1. Set your webhook URL.
+//    If you don't have one, form submissions will be simulated in the browser console.
 const WEBHOOK_URL_CONFIG = 'YOUR_WEBHOOK_URL_HERE'; 
 
-// 2. Replace 'YOUR_WEBHOOK_AUTH_TOKEN_HERE' with your auth token if your webhook
-//    requires one. If not, you can leave it as is or set it to an empty string ('').
-const WEBHOOK_AUTH_CONFIG = 'YOUR_WEBHOOK_AUTH_TOKEN_HERE';
+// 2. Configure Header Authentication (optional).
+//    Based on your screenshot, you should set:
+//    - WEBHOOK_HEADER_NAME_CONFIG to 'key'
+//    - WEBHOOK_HEADER_VALUE_CONFIG to the secret value for that key.
+//    If your webhook doesn't need auth, leave these as they are.
+const WEBHOOK_HEADER_NAME_CONFIG = 'YOUR_HEADER_NAME_HERE'; // e.g., 'key' or 'Authorization'
+const WEBHOOK_HEADER_VALUE_CONFIG = 'YOUR_HEADER_VALUE_HERE'; // e.g., 'YOUR_SECRET_TOKEN'
 // =================================================================================
 // Do not edit below this line
 // =================================================================================
 
 const WEBHOOK_URL = WEBHOOK_URL_CONFIG !== 'YOUR_WEBHOOK_URL_HERE' ? WEBHOOK_URL_CONFIG : undefined;
-const WEBHOOK_AUTH = WEBHOOK_AUTH_CONFIG !== 'YOUR_WEBHOOK_AUTH_TOKEN_HERE' ? WEBHOOK_AUTH_CONFIG : undefined;
+const WEBHOOK_HEADER_NAME = WEBHOOK_HEADER_NAME_CONFIG !== 'YOUR_HEADER_NAME_HERE' ? WEBHOOK_HEADER_NAME_CONFIG : undefined;
+const WEBHOOK_HEADER_VALUE = WEBHOOK_HEADER_VALUE_CONFIG !== 'YOUR_HEADER_VALUE_HERE' ? WEBHOOK_HEADER_VALUE_CONFIG : undefined;
 
 
 if (!WEBHOOK_URL) {
@@ -31,7 +35,7 @@ export const submitForm = async (
   console.log('Form Type:', type);
   console.log('WEBHOOK_URL configured:', WEBHOOK_URL ? 'Yes' : 'No');
   console.log('WEBHOOK_URL value:', WEBHOOK_URL);
-  console.log('WEBHOOK_AUTH configured:', WEBHOOK_AUTH ? 'Yes' : 'No');
+  console.log('Webhook Auth Header configured:', (WEBHOOK_HEADER_NAME && WEBHOOK_HEADER_VALUE) ? 'Yes' : 'No');
 
   if (!WEBHOOK_URL) {
     console.log('No WEBHOOK_URL found, simulating submission');
@@ -70,9 +74,9 @@ export const submitForm = async (
       formData.append('resume', file, file.name);
 
       const headers: HeadersInit = {};
-      if (WEBHOOK_AUTH) {
-        headers['key'] = WEBHOOK_AUTH;
-        console.log('Added auth header "key"');
+      if (WEBHOOK_HEADER_NAME && WEBHOOK_HEADER_VALUE) {
+        headers[WEBHOOK_HEADER_NAME] = WEBHOOK_HEADER_VALUE;
+        console.log(`Added auth header "${WEBHOOK_HEADER_NAME}"`);
       }
 
       console.log('Sending multipart/form-data POST request to:', WEBHOOK_URL);
@@ -99,9 +103,9 @@ export const submitForm = async (
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
       };
-      if (WEBHOOK_AUTH) {
-        headers['key'] = WEBHOOK_AUTH;
-        console.log('Added auth header "key"');
+      if (WEBHOOK_HEADER_NAME && WEBHOOK_HEADER_VALUE) {
+        headers[WEBHOOK_HEADER_NAME] = WEBHOOK_HEADER_VALUE;
+        console.log(`Added auth header "${WEBHOOK_HEADER_NAME}"`);
       }
       
       console.log('Sending JSON POST request to:', WEBHOOK_URL);
