@@ -1,36 +1,9 @@
 import { CompanyFormData, EmployeeFormData, FormType } from '../types';
 
-// =================================================================================
-// IMPORTANT: CONFIGURE YOUR WEBHOOK DETAILS HERE
-// =================================================================================
-// For production environments like Vercel, it is highly recommended to set these
-// values as Environment Variables in your project settings.
-//
-// Vercel instructions:
-// 1. Go to your Project > Settings > Environment Variables.
-// 2. Add the following variables:
-//    - WEBHOOK_URL: Your full webhook endpoint URL.
-//    - WEBHOOK_HEADER_NAME: The name of the authentication header (e.g., 'key').
-//    - WEBHOOK_HEADER_VALUE: The secret value for the authentication header.
-//
-// The code will prioritize environment variables. If they are not found, it will
-// fall back to the hardcoded values below, which is useful for local development.
-// =================================================================================
-const WEBHOOK_URL_CONFIG = process.env.WEBHOOK_URL || 'YOUR_WEBHOOK_URL_HERE'; 
-const WEBHOOK_HEADER_NAME_CONFIG = process.env.WEBHOOK_HEADER_NAME || 'YOUR_HEADER_NAME_HERE';
-const WEBHOOK_HEADER_VALUE_CONFIG = process.env.WEBHOOK_HEADER_VALUE || 'YOUR_HEADER_VALUE_HERE';
-// =================================================================================
-// Do not edit below this line
-// =================================================================================
-
-const WEBHOOK_URL = WEBHOOK_URL_CONFIG !== 'YOUR_WEBHOOK_URL_HERE' ? WEBHOOK_URL_CONFIG : undefined;
-const WEBHOOK_HEADER_NAME = WEBHOOK_HEADER_NAME_CONFIG !== 'YOUR_HEADER_NAME_HERE' ? WEBHOOK_HEADER_NAME_CONFIG : undefined;
-const WEBHOOK_HEADER_VALUE = WEBHOOK_HEADER_VALUE_CONFIG !== 'YOUR_HEADER_VALUE_HERE' ? WEBHOOK_HEADER_VALUE_CONFIG : undefined;
-
-
-if (!WEBHOOK_URL) {
-  console.warn("Webhook URL is not configured. Form submissions will be simulated in the console. For production, set the WEBHOOK_URL environment variable.");
-}
+// The webhook URL now points to our secure, server-side API proxy on Vercel.
+// This proxy will read your secrets from Vercel's environment variables
+// and forward the request to your actual webhook endpoint.
+const PROXY_WEBHOOK_URL = '/api/submit';
 
 export const submitForm = async (
   type: FormType,
@@ -38,19 +11,7 @@ export const submitForm = async (
 ): Promise<{ success: boolean; message: string }> => {
   console.log('=== WEBHOOK SUBMISSION START ===');
   console.log('Form Type:', type);
-  console.log('WEBHOOK_URL configured:', WEBHOOK_URL ? 'Yes' : 'No');
-  console.log('WEBHOOK_URL value:', WEBHOOK_URL);
-  console.log('Webhook Auth Header configured:', (WEBHOOK_HEADER_NAME && WEBHOOK_HEADER_VALUE) ? 'Yes' : 'No');
-
-  if (!WEBHOOK_URL) {
-    console.log('No WEBHOOK_URL found, simulating submission');
-    return new Promise(resolve => {
-        setTimeout(() => {
-            console.log('Simulated submission data:', { type, data });
-            resolve({ success: true, message: 'Submission successful (simulated)!' });
-        }, 1000);
-    });
-  }
+  console.log('Submitting to API proxy endpoint:', PROXY_WEBHOOK_URL);
 
   try {
     let response;
@@ -69,8 +30,6 @@ export const submitForm = async (
       console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
       
       const formData = new FormData();
-      // It's good practice to send all data, including the 'type', in the form data
-      // so the server can easily parse it.
       formData.append('type', type);
       formData.append('fullName', employeeData.fullName);
       formData.append('email', employeeData.email);
@@ -78,23 +37,13 @@ export const submitForm = async (
       formData.append('skillLevel', employeeData.skillLevel);
       formData.append('resume', file, file.name);
 
-      const headers: HeadersInit = {};
-      if (WEBHOOK_HEADER_NAME && WEBHOOK_HEADER_VALUE) {
-        headers[WEBHOOK_HEADER_NAME] = WEBHOOK_HEADER_VALUE;
-        console.log(`Added auth header "${WEBHOOK_HEADER_NAME}"`);
-      }
-
-      console.log('Sending multipart/form-data POST request to:', WEBHOOK_URL);
-      console.log('Request headers:', Object.keys(headers));
-      console.log('FormData keys:', Array.from(formData.keys()));
-
-      // When using FormData with fetch, DO NOT set the 'Content-Type' header.
-      // The browser will automatically set it to 'multipart/form-data' with the correct boundary.
-      response = await fetch(WEBHOOK_URL, {
+      console.log('Sending multipart/form-data POST request to proxy...');
+      
+      // The browser will automatically set the correct 'Content-Type' for FormData.
+      // We don't add auth headers here; the serverless function does that securely.
+      response = await fetch(PROXY_WEBHOOK_URL, {
         method: 'POST',
-        headers,
         body: formData,
-        mode: 'cors',
       });
 
     } else {
@@ -108,30 +57,25 @@ export const submitForm = async (
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
       };
-      if (WEBHOOK_HEADER_NAME && WEBHOOK_HEADER_VALUE) {
-        headers[WEBHOOK_HEADER_NAME] = WEBHOOK_HEADER_VALUE;
-        console.log(`Added auth header "${WEBHOOK_HEADER_NAME}"`);
-      }
       
-      console.log('Sending JSON POST request to:', WEBHOOK_URL);
-      console.log('Request headers:', Object.keys(headers));
+      console.log('Sending JSON POST request to proxy...');
       console.log('Payload:', JSON.stringify(payload, null, 2));
 
-      response = await fetch(WEBHOOK_URL, {
+      response = await fetch(PROXY_WEBHOOK_URL, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
-        mode: 'cors',
       });
     }
 
-    console.log('Response received - Status:', response.status, response.statusText);
+    console.log('Response received from proxy - Status:', response.status, response.statusText);
     console.log('Response OK:', response.ok);
 
     if (!response.ok) {
-      let errorDetail = '';
+      let errorDetail = 'Could not read error response body.';
       try {
         const errorBody = await response.json();
+        // The proxy forwards the webhook's response, or provides its own error message
         errorDetail = errorBody.message || errorBody.error || JSON.stringify(errorBody);
       } catch (e) {
         try {
@@ -141,21 +85,22 @@ export const submitForm = async (
         }
       }
 
-      console.error(`❌ Webhook submission failed`);
+      console.error(`❌ Submission via proxy failed`);
       console.error(`Status: ${response.status}`);
       console.error(`Details: ${errorDetail}`);
 
       let userFriendlyMessage;
+      // Use the same status code mapping, as the proxy forwards the status
       switch (response.status) {
         case 400:
           userFriendlyMessage = 'There was a problem with your submission. Please double-check the form.';
           break;
         case 401:
         case 403:
-          userFriendlyMessage = 'Authentication failed. Please verify your credentials.';
+          userFriendlyMessage = 'Authentication failed. Please check the server configuration.';
           break;
         case 404:
-          userFriendlyMessage = 'The submission service could not be found. Please contact support.';
+          userFriendlyMessage = 'The submission service could not be found. This could be an issue with the proxy or the final webhook.';
           break;
         case 429:
           userFriendlyMessage = 'You are submitting too frequently. Please wait a moment and try again.';
@@ -164,7 +109,7 @@ export const submitForm = async (
         case 502:
         case 503:
         case 504:
-          userFriendlyMessage = 'The server is currently unavailable. We are working on it, please try again later.';
+          userFriendlyMessage = 'The server is currently unavailable. Please try again later.';
           break;
         default:
           userFriendlyMessage = `An unexpected error occurred (Status: ${response.status}). Please try again.`;
@@ -173,11 +118,10 @@ export const submitForm = async (
       throw new Error(userFriendlyMessage);
     }
 
-    // Try to read response body
     let responseData;
     try {
       responseData = await response.json();
-      console.log('Response data:', JSON.stringify(responseData, null, 2));
+      console.log('Response data from proxy:', JSON.stringify(responseData, null, 2));
     } catch (e) {
       console.log('No JSON response body (this is okay)');
     }
@@ -188,18 +132,16 @@ export const submitForm = async (
     return { success: true, message: 'Submission successful!' };
 
   } catch (error: unknown) {
-    console.error('❌ Webhook submission error:', error);
+    console.error('❌ Submission error:', error);
     
-    // Check if it's a network error
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
       console.error('Network error: This could be due to:');
-      console.error('1. CORS issue: The server at the configured WEBHOOK_URL is not configured to accept requests from this origin. Check the browser console for specific CORS error messages.');
-      console.error('2. Network connectivity issue: The server is down or unreachable.');
-      console.error('3. Mixed content: The app is on HTTPS but the webhook is on HTTP.');
+      console.error('1. The API proxy endpoint (/api/submit) is not available. Ensure you have deployed to Vercel.');
+      console.error('2. A general network connectivity issue.');
       
       return { 
         success: false, 
-        message: 'Network error: Unable to reach server. This is often a CORS issue. Please check the browser\'s developer console for more details.' 
+        message: 'Network error: Unable to reach submission service. Please ensure you are connected and the app is deployed correctly.' 
       };
     }
     
